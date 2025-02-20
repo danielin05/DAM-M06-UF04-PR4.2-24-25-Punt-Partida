@@ -1,0 +1,62 @@
+{
+  "analisis": [
+    {
+      "imatge": {
+        "nom_fitxer": "02f4b3be2d.jpg"
+      },
+      "analisi": {
+        "nom_comu": "Cervo",
+        "nom_cientific": "Capra aegagrus hamiltoni",
+        "taxonomia": {
+          "classe": "Mamífer/Au/Rèptil/Amfibi/Peix",
+          "ordre": "Artiodactyla",
+          "familia": "Cervidae"
+        },
+        "habitat": {
+          "tipus": [
+            "Sabinar/Hay",
+            "Prateros/Medicinales",
+            "Monte/Frescas"
+          ],
+          "regioGeografica": [
+            "Europa Oeste",
+            "Eurasia Occidental",
+            "África Subsahariana"
+          ],
+          "clima": [
+            "Temperat/Frízer",
+            "Migració/Sudorada",
+            "Prateros/Hivern"
+          ]
+        },
+        "dieta": {
+          "tipus": "Omnívor/Herbívor",
+          "aliments_principals": [
+            "Erbas/Cápsulas de hueso/Grumetes"
+          ]
+        },
+        "caracteristiques_fisicas": {
+          "mida": {
+            "altura_mitjana_cm": "160 cm",
+            "pes_mitja_kg": "95 kg"
+          },
+          "colors_predominants": [
+            "Gris/Marrons",
+            "Café claros/Tiñones"
+          ],
+          "trets_distintius": [
+            "Orejas grandes/Patas largas",
+            "Ventas altas/Súcils anchos"
+          ]
+        },
+        "estat_conservacio": {
+          "classificacio_IUCN": "Critic/Não-critic",
+          "amenaces_principals": [
+            "Depredació/Migració ipresos",
+            "Terrenos de cultivo/Desforestament"
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
 const csv = require('csv-parser');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
 
 // Constants
 const DATA_SUBFOLDER = 'steamreviews';
@@ -45,9 +45,6 @@ async function analyzeSentiment(text) {
 
         const data = await response.json();
         
-        // Depuració de la resposta
-        console.log('Resposta completa d\'Ollama:', JSON.stringify(data, null, 2));
-        
         // Verificar si tenim una resposta vàlida
         if (!data || !data.response) {
             throw new Error('La resposta d\'Ollama no té el format esperat');
@@ -56,22 +53,15 @@ async function analyzeSentiment(text) {
         return data.response.trim().toLowerCase();
     } catch (error) {
         console.error('Error detallat en la petició a Ollama:', error);
-        console.error('Detalls adicionals:', {
-            url: `${process.env.CHAT_API_OLLAMA_URL}/generate`,
-            model: process.env.CHAT_API_OLLAMA_MODEL_TEXT,
-            promptLength: text.length
-        });
         return 'error';
     }
 }
 
 async function main() {
     try {
-        // Obtenim la ruta del directori de dades
-        const dataPath = process.env.DATA_PATH;
 
         // Validem les variables d'entorn necessàries
-        if (!dataPath) {
+        if (!process.env.DATA_PATH) {
             throw new Error('La variable d\'entorn DATA_PATH no està definida');
         }
         if (!process.env.CHAT_API_OLLAMA_URL) {
@@ -82,8 +72,10 @@ async function main() {
         }
 
         // Construïm les rutes completes als fitxers CSV
-        const gamesFilePath = path.join(__dirname, dataPath, DATA_SUBFOLDER, CSV_GAMES_FILE_NAME);
-        const reviewsFilePath = path.join(__dirname, dataPath, DATA_SUBFOLDER, CSV_REVIEWS_FILE_NAME);
+        const gamesFilePath = path.join(__dirname, process.env.DATA_PATH, DATA_SUBFOLDER, CSV_GAMES_FILE_NAME);
+        const reviewsFilePath = path.join(__dirname, process.env.DATA_PATH, DATA_SUBFOLDER, CSV_REVIEWS_FILE_NAME);
+
+        console.log(gamesFilePath);
 
         // Validem si els fitxers existeixen
         if (!fs.existsSync(gamesFilePath) || !fs.existsSync(reviewsFilePath)) {
@@ -94,26 +86,58 @@ async function main() {
         const games = await readCSV(gamesFilePath);
         const reviews = await readCSV(reviewsFilePath);
 
-        // Iterem pels jocs
-        console.log('\n=== Llista de Jocs ===');
-        for (const game of games) {
-            console.log(`Codi: ${game.appid}, Nom: ${game.name}`);
+        const gameStats = [];
+
+        // Iterem pels jocs i les primeres dues ressenyes
+        for (const game of games.slice(0, 2)) {
+            const gameReviews = reviews.filter((review) => review.app_id === game.appid).slice(0, 2);
+
+            let positive = 0;
+            let negative = 0;
+            let neutral = 0;
+            let error = 0;
+
+            for (const review of gameReviews) {
+                const sentiment = await analyzeSentiment(review.content);
+
+                switch (sentiment) {
+                    case 'positive':
+                        positive++;
+                        break;
+                    case 'negative':
+                        negative++;
+                        break;
+                    case 'neutral':
+                        neutral++;
+                        break;
+                    default:
+                        error++;
+                        break;
+                }
+            }
+
+            gameStats.push({
+                appid: game.appid,
+                name: game.name,
+                statistics: {
+                    positive,
+                    negative,
+                    neutral,
+                    error,
+                }
+            });
         }
 
-        // Iterem per les primeres 10 reviews i analitzem el sentiment
-        console.log('\n=== Anàlisi de Sentiment de Reviews ===');
-        const reviewsToAnalyze = reviews.slice(0, 2);
-        
-        for (const review of reviewsToAnalyze) {
-            console.log(`\nProcessant review: ${review.id}`);
-            const sentiment = await analyzeSentiment(review.content);
-            console.log(`Review ID: ${review.id}`);
-            console.log(`Joc ID: ${review.app_id}`);
-            console.log(`Contingut: ${review.content.substring(0, 100)}...`);
-            console.log(`Sentiment (Ollama): ${sentiment}`);
-            console.log('------------------------');
-        }
-        console.log(`\nNOMÉS AVALUEM LES DUES PRIMERES REVIEWS`);
+        const result = {
+            timestamp: new Date().toISOString(),
+            games: gameStats,
+        };
+
+        // Guardem la sortida en un fitxer JSON
+        const outputFilePath = path.join(__dirname, process.env.DATA_PATH, 'exercici2_resposta.json');
+        fs.writeFileSync(outputFilePath, JSON.stringify(result, null, 2));
+
+        console.log('Sortida guardada a exercici2_resposta.json');
      } catch (error) {
         console.error('Error durant l\'execució:', error.message);
     }
